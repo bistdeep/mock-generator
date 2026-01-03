@@ -1,0 +1,53 @@
+# ----------------------------
+# Python
+# ----------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.env
+.venv/
+venv/
+ENV/
+env/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ----------------------------
+# Flask
+# ----------------------------
+instance/
+.webassets-cache
+
+# ----------------------------
+# Output / Generated files
+# ----------------------------
+output/
+*.pdf
+*.log
+*.aux
+*.out
+*.toc
+
+# ----------------------------
+# Docker
+# ----------------------------
+*.tar
+.dockerignore
+
+# ----------------------------
+# OS / Editor
+# ----------------------------
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ----------------------------
+# Node / Frontend junk (future-proof)
+# ----------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*-+
+yarn-error.log*
