@@ -4,6 +4,8 @@ import os
 import re
 import subprocess
 import hashlib
+import csv
+import io 
 
 app = Flask(__name__)
 
@@ -14,15 +16,28 @@ OUTPUT_MD = "output/mock.md"
 OUTPUT_PDF = "output/mock.pdf"
 
 
-# Extract Question 
-def extract_question(md_text):
+# Extract Question and Answer
+def extract_ques_ans(md_text):
     parts = md_text.split('---', 2)
     if len(parts) < 3:
-        return ""
+        return {"question": "", "answer": ""}
 
     body = parts[2]
-    question = body.split(':::', 1)[0]
-    return question.strip()
+
+    # Question = everything before first callout
+    question = body.split(':::', 1)[0].strip()
+
+    # Regex to extract ONLY the Answer callout
+    pattern = r':::\s*\{\.callout-note\s+title="Answer".*?\}\s*(.*?)\s*:::'
+    match = re.search(pattern, body, re.DOTALL)
+
+    answer = match.group(1).strip() if match else ""
+
+    return {
+        "question": question,
+        "answer": answer
+    }
+
 
 
 # Handle Questions with Images 
@@ -73,6 +88,12 @@ def handle_svg_images(md):
     return re.sub(r'!\[(.*?)\]\((.*?)\)', repl, md)
 
 
+# Filename
+def safe_filename(name):
+    name = name.strip()
+    name = re.sub(r"[^\w\-]", "_", name)  # keep a-z A-Z 0-9 _ -
+    return name or "mock"
+
 ############### API Setup ################
 
 # Home 
@@ -118,11 +139,21 @@ def extract():
     raw_url = f"{RAW_BASE}/{subject}/bank/{qid}.md"
     md = requests.get(raw_url).text
 
-    extracted = extract_question(md)
-    extracted = fix_image_paths(extracted, subject)
-    extracted = handle_svg_images(extracted)
+    # Extract Q&A
+    qa = extract_ques_ans(md)
 
-    return jsonify({"content": extracted})
+    # Fix images & SVGs
+    question = fix_image_paths(qa["question"], subject)
+    question = handle_svg_images(question)
+
+    answer = fix_image_paths(qa["answer"], subject)
+    answer = handle_svg_images(answer)
+
+    return jsonify({
+        "question": question,
+        "answer": answer
+    })
+
 
 
 # Export PDF 
@@ -134,28 +165,127 @@ def export():
             return jsonify({"error": "No markdown received"}), 400
 
         markdown = data["markdown"]
+        filename = safe_filename(data.get("filename", "mock"))
 
         os.makedirs("output", exist_ok=True)
 
-        with open(OUTPUT_MD, "w") as f:
+        md_path = os.path.join("output", f"{filename}.md")
+        pdf_path = os.path.join("output", f"{filename}.pdf")
+
+        # ✅ WRITE markdown to file (THIS WAS MISSING)
+        with open(md_path, "w", encoding="utf-8") as f:
             f.write(markdown)
 
-        cmd = f"pandoc {OUTPUT_MD} -o {OUTPUT_PDF} --pdf-engine=xelatex"
-        exit_code = os.system(cmd)
+        # ✅ SAFE pandoc execution
+        cmd = [
+            "pandoc",
+            md_path,
+            "-o",
+            pdf_path,
+            "--pdf-engine=xelatex"
+        ]
 
-        if exit_code != 0:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True
+        )
+
+        if result.returncode != 0:
+            print("PANDOC STDOUT:\n", result.stdout)
+            print("PANDOC STDERR:\n", result.stderr)
             return jsonify({"error": "Pandoc failed"}), 500
 
-        if not os.path.exists(OUTPUT_PDF):
+        if not os.path.exists(pdf_path):
             return jsonify({"error": "PDF not created"}), 500
 
-        return send_file(OUTPUT_PDF, as_attachment=True)
+        return send_file(pdf_path, as_attachment=True)
 
     except Exception as e:
         print("EXPORT ERROR:", e)
         return jsonify({"error": str(e)}), 500
 
 
+# Upload CSV and Generate Mock Test 
+@app.route("/upload-csv", methods=["POST"])
+def upload_csv():
+    if "file" not in request.files:
+        return jsonify({"error": "No CSV file uploaded"}), 400
+
+    file = request.files["file"]
+    if not file.filename.endswith(".csv"):
+        return jsonify({"error": "Invalid file type"}), 400
+
+    try:
+        stream = io.StringIO(file.stream.read().decode("utf-8"))
+        reader = csv.DictReader(stream)
+
+        # Validate headers strictly
+        if not reader.fieldnames or "subject" not in reader.fieldnames or "q_ids" not in reader.fieldnames:
+            return jsonify({
+                "error": "CSV must have headers: subject,q_ids"
+            }), 400
+
+
+        title = request.form.get("title", "GATE Mock Test").strip() or "GATE Mock Test"
+
+        buffer = f"""\\begin{{center}}\n\\LARGE\\textbf{{{title}}}\n\\end{{center}}\n\n\\vspace{{1cm}}\n\n---\n\n"""
+
+        current_subject = None
+        q_counter = 1
+        questions_added = 0
+
+        for row in reader:
+            subject = row["subject"].strip()
+            q_ids_raw = row["q_ids"].strip()
+
+            if not subject or not q_ids_raw:
+                continue
+
+            # New subject section
+            if subject != current_subject:
+                buffer += f"## Subject: {subject.replace('_', ' ').title()}\n\n"
+                current_subject = subject
+                q_counter = 1
+
+            q_ids = q_ids_raw.split()
+
+            for q in q_ids:
+                qid = f"question-{int(q):03d}"
+                raw_url = f"{RAW_BASE}/{subject}/bank/{qid}.md"
+
+                r = requests.get(raw_url)
+                if r.status_code != 200:
+                    print("FAILED FETCH:", raw_url)
+                    continue
+
+                qa = extract_ques_ans(r.text)
+
+                question = handle_svg_images(
+                    fix_image_paths(qa["question"], subject)
+                )
+                answer = handle_svg_images(
+                    fix_image_paths(qa["answer"], subject)
+                )
+
+                buffer += f"### Question {q_counter}\n\n{question}\n\n"
+
+                if answer.strip():
+                    buffer += f"#### Answer\n\n{answer}\n\n"
+
+                q_counter += 1
+                questions_added += 1
+
+        if questions_added == 0:
+            return jsonify({
+                "error": "No questions could be generated. Check subject names and question IDs."
+            }), 400
+
+        return jsonify({"markdown": buffer})
+
+    except Exception as e:
+        print("CSV ERROR:", e)
+        return jsonify({"error": str(e)}), 500
 
 
 ############### Run App ################
