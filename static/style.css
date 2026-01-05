@@ -1,0 +1,422 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Body */
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: #e0e0e0;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: rgba(30, 30, 46, 0.9);
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+}
+
+/* Heading */
+h1 {
+  text-align: center;
+  color: #00d4ff;
+  font-size: 2.5em;
+  margin-bottom: 40px;
+  text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+  font-weight: 600;
+}
+
+/* Sections */
+.section {
+  margin-bottom: 30px;
+  padding: 25px;
+  background: rgba(40, 40, 60, 0.6);
+  border-radius: 15px;
+  border: 1px solid rgba(0, 212, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.section:hover {
+  border-color: rgba(0, 212, 255, 0.3);
+  box-shadow: 0 5px 20px rgba(0, 212, 255, 0.1);
+}
+
+/* Section title */
+.section-title {
+  color: #00d4ff;
+  font-size: 1.2em;
+  margin-bottom: 15px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-title::before {
+  content: "";
+  width: 4px;
+  height: 20px;
+  background: #00d4ff;
+  border-radius: 2px;
+}
+
+/* Controls */
+.control-group {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Select + Input */
+select,
+input[type="text"] {
+  flex: 1;
+  min-width: 200px;
+  padding: 12px 16px;
+  background: rgba(20, 20, 35, 0.8);
+  border: 2px solid rgba(0, 212, 255, 0.2);
+  border-radius: 10px;
+  color: #e0e0e0;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+select {
+  cursor: pointer;
+}
+
+select:hover,
+input[type="text"]:hover {
+  border-color: rgba(0, 212, 255, 0.5);
+}
+
+select:focus,
+input[type="text"]:focus {
+  border-color: #00d4ff;
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+}
+
+input[type="text"]::placeholder {
+  color: rgba(224, 224, 224, 0.6);
+}
+
+/* File Input Styling */
+input[type="file"] {
+  display: none;
+}
+
+.file-upload-wrapper {
+  flex: 1;
+  min-width: 200px;
+  position: relative;
+}
+
+.file-upload-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(20, 20, 35, 0.8);
+  border: 2px dashed rgba(0, 212, 255, 0.3);
+  border-radius: 10px;
+  color: #e0e0e0;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.file-upload-label:hover {
+  border-color: rgba(0, 212, 255, 0.6);
+  background: rgba(30, 30, 45, 0.9);
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.15);
+}
+
+.file-upload-label::before {
+  content: "📁";
+  font-size: 20px;
+  line-height: 1;
+}
+
+.file-upload-label .file-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgba(224, 224, 224, 0.6);
+}
+
+.file-upload-label.has-file .file-name {
+  color: #00ff88;
+}
+
+.file-upload-label .upload-icon {
+  font-size: 18px;
+  opacity: 0.6;
+}
+
+/* Buttons */
+button {
+  padding: 12px 30px;
+  background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
+  background: linear-gradient(135deg, #00e5ff 0%, #00b8e6 100%);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Preview */
+.preview-section {
+  margin-top: 30px;
+}
+
+textarea {
+  width: 100%;
+  min-height: 400px;
+  padding: 20px;
+  background: rgba(20, 20, 35, 0.9);
+  border: 2px solid rgba(0, 212, 255, 0.2);
+  border-radius: 15px;
+  color: #e0e0e0;
+  font-family: "Consolas", "Monaco", "Courier New", monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+textarea:focus {
+  border-color: #00d4ff;
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+}
+
+/* Export */
+.export-section {
+  margin-top: 30px;
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.export-section button {
+  padding: 15px 50px;
+  font-size: 16px;
+  min-width: 200px;
+}
+
+.export-section button:first-child {
+  background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+  box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+}
+
+.export-section button:first-child:hover {
+  background: linear-gradient(135deg, #00ff99 0%, #00dd7a 100%);
+  box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
+}
+
+.export-section button:last-child {
+  background: linear-gradient(135deg, #ff6b6b 0%, #cc5555 100%);
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+}
+
+.export-section button:last-child:hover {
+  background: linear-gradient(135deg, #ff7b7b 0%, #dd6565 100%);
+  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+}
+
+/* Divider */
+.divider {
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 212, 255, 0.3) 50%,
+    transparent 100%
+  );
+  margin: 30px 0;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(20, 20, 35, 0.5);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.4);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.6);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 20px;
+  }
+
+  h1 {
+    font-size: 2em;
+  }
+
+  .control-group {
+    flex-direction: column;
+  }
+
+  select,
+  input[type="text"],
+  button {
+    width: 100%;
+  }
+
+  .file-upload-wrapper {
+    width: 100%;
+  }
+
+  .export-section {
+    flex-direction: column;
+  }
+
+  .export-section button {
+    width: 100%;
+  }
+}
+
+/* Additional polish */
+.section {
+  position: relative;
+  overflow: hidden;
+}
+
+.section::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    rgba(0, 212, 255, 0.03) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  opacity: 0;
+}
+
+.section:hover::after {
+  opacity: 1;
+}
+
+/* Button loading state */
+button.loading {
+  position: relative;
+  color: transparent;
+  pointer-events: none;
+}
+
+button.loading::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin-left: -8px;
+  margin-top: -8px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Smooth transitions for select options */
+select option {
+  background: rgba(20, 20, 35, 0.95);
+  color: #e0e0e0;
+  padding: 8px;
+}
+
+/* Focus visible for accessibility */
+*:focus-visible {
+  outline: 2px solid #00d4ff;
+  outline-offset: 2px;
+}
+
+/* Loading overlay */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 25, 0.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  color: #e0e0e0;
+  font-size: 16px;
+}
+
+.loading-overlay.hidden {
+  display: none;
+}
+
+/* Spinner */
+.loader {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(0, 212, 255, 0.2);
+  border-top: 4px solid #00d4ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
