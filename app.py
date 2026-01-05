@@ -172,11 +172,9 @@ def export():
         md_path = os.path.join("output", f"{filename}.md")
         pdf_path = os.path.join("output", f"{filename}.pdf")
 
-        # ✅ WRITE markdown to file (THIS WAS MISSING)
         with open(md_path, "w", encoding="utf-8") as f:
             f.write(markdown)
-
-        # ✅ SAFE pandoc execution
+            
         cmd = [
             "pandoc",
             md_path,
