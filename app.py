@@ -15,6 +15,17 @@ RAW_BASE = "https://raw.githubusercontent.com/iitmbsc-student-projects/gate-da/m
 OUTPUT_MD = "output/mock.md"
 OUTPUT_PDF = "output/mock.pdf"
 
+SUBJECT_LABELS = {
+    "ai": "Artificial Intelligence",
+    "calculus": "Calculus",
+    "dbms": "Database Management Systems",
+    "linear_algebra": "Linear Algebra",
+    "machine_learning": "Machine Learning",
+    "pdsa": "Programming, Data Structures & Algorithms",
+    "prob_stats": "Probability & Statistics",
+    "aptitude": "Aptitude",
+}
+
 
 # Extract Question and Answer
 def extract_ques_ans(md_text):
@@ -87,6 +98,29 @@ def handle_svg_images(md):
 
     return re.sub(r'!\[(.*?)\]\((.*?)\)', repl, md)
 
+# Fix LaTeX Operators & Environments
+def fix_latex_operators(text: str) -> str:
+    replacements = {
+        r"\\lt": "<",
+        r"\lt": "<",
+        r"\\gt": ">",
+        r"\gt": ">",
+    }
+    for k, v in replacements.items():
+        text = text.replace(k, v)
+
+    return text
+
+# Fix Nested Equations
+def fix_nested_equations(buffer: str) -> str:
+    """
+    Remove $$ wrappers around equation* environments.
+    """
+    pattern = re.compile(
+        r"\$\$\s*(\\begin\{equation\*\}[\s\S]*?\\end\{equation\*\})\s*\$\$",
+        re.MULTILINE
+    )
+    return pattern.sub(r"\1", buffer)
 
 # Filename
 def safe_filename(name):
@@ -242,7 +276,11 @@ def upload_csv():
 
             # New subject section
             if subject != current_subject:
-                buffer += f"## Subject: {subject.replace('_', ' ').title()}\n\n"
+                label = SUBJECT_LABELS.get(
+                    subject,
+                    subject.replace("_", " ").title()
+                )
+                buffer += f"## Subject: {label}\n\n"
                 current_subject = subject
                 q_counter = 1
 
@@ -278,12 +316,16 @@ def upload_csv():
             return jsonify({
                 "error": "No questions could be generated. Check subject names and question IDs."
             }), 400
+        
+        buffer = fix_latex_operators(buffer)
+        buffer = fix_nested_equations(buffer)
 
         return jsonify({"markdown": buffer})
 
     except Exception as e:
         print("CSV ERROR:", e)
         return jsonify({"error": str(e)}), 500
+    
 
 
 ############### Run App ################

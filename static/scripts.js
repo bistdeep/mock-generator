@@ -10,6 +10,7 @@ const allowedSubjects = [
   "machine_learning",
   "pdsa",
   "prob_stats",
+  "aptitude",
 ];
 
 const SUBJECT_LABELS = {
@@ -20,6 +21,7 @@ const SUBJECT_LABELS = {
   machine_learning: "Machine Learning",
   pdsa: "Programming, Data Structures & Algorithms",
   prob_stats: "Probability & Statistics",
+  aptitude: "Aptitude",
 };
 
 fetch("/subjects")
