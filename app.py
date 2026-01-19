@@ -6,6 +6,7 @@ import subprocess
 import hashlib
 import csv
 import io 
+import string 
 
 app = Flask(__name__)
 
@@ -128,65 +129,90 @@ def safe_filename(name):
     name = re.sub(r"[^\w\-]", "_", name)  # keep a-z A-Z 0-9 _ -
     return name or "mock"
 
+# Convert Options to Enumerate 
+def convert_options_to_enumerate(question: str) -> str:
+    lines = question.splitlines()
+    output = []
+    options = []
+    current_option = None
+
+    for line in lines:
+        m = re.match(r"\s*-\s*\[\s*\]\s*(.*)", line)
+        if m:
+            # start a new option
+            if current_option is not None:
+                options.append(current_option.strip())
+            current_option = m.group(1)
+        else:
+            if current_option is not None:
+                # continuation of the same option (multi-line math, matrix, etc.)
+                current_option += "\n" + line
+            else:
+                output.append(line)
+
+    if current_option is not None:
+        options.append(current_option.strip())
+
+    if options:
+        enum = [r"\begin{enumerate}[label=\alph*.]"]
+        for opt in options:
+            enum.append(rf"\item {opt}")
+        enum.append(r"\end{enumerate}")
+        output.append("\n".join(enum))
+
+    return "\n".join(output)
+
+# Check if Question is NAT Type 
+def is_nat_question(question_text: str) -> bool:
+    return "- [" not in question_text
+
+# Fix Answer Format
+def format_answer_block(answer: str) -> str:
+    """
+    Convert answer checklist into green-colored lettered answers.
+    Handles multi-line math (bmatrix, align, etc.).
+    """
+    lines = answer.splitlines()
+    answers = []
+    current = None
+    index = 0
+
+    for line in lines:
+        m_checked = re.match(r"\s*-\s*\[(x|X)\]\s*(.*)", line)
+        m_unchecked = re.match(r"\s*-\s*\[\s*\]\s*(.*)", line)
+
+        if m_checked:
+            # close previous
+            if current is not None:
+                answers.append(current)
+
+            label = string.ascii_lowercase[index]
+            current = f"{label}. {m_checked.group(2)}"
+            index += 1
+
+        elif m_unchecked:
+            # skip but still increment index
+            if current is not None:
+                answers.append(current)
+                current = None
+            index += 1
+
+        else:
+            # continuation of current answer (matrix, equation, etc.)
+            if current is not None:
+                current += "\n" + line
+
+    if current is not None:
+        answers.append(current)
+
+    return "\n".join(answers)
+
 ############### API Setup ################
 
 # Home 
 @app.route("/")
 def index():
     return render_template("index.html")
-
-# Get Subjects
-@app.route("/subjects")
-def get_subjects():
-    r = requests.get(GITHUB_API)
-    data = r.json()
-
-    subjects = [
-        item["name"]
-        for item in data
-        if item["type"] == "dir"
-    ]
-    return jsonify(subjects)
-
-
-# Get Questions for Subject
-@app.route("/questions/<subject>")
-def get_questions(subject):
-    url = f"{GITHUB_API}/{subject}/bank"
-    r = requests.get(url)
-
-    questions = [
-        f["name"].replace(".md", "")
-        for f in r.json()
-        if f["name"].startswith("question-")
-    ]
-    return jsonify(questions)
-
-
-# Extract Question Markdown 
-@app.route("/extract", methods=["POST"])
-def extract():
-    data = request.json
-    subject = data["subject"]
-    qid = data["question"]
-
-    raw_url = f"{RAW_BASE}/{subject}/bank/{qid}.md"
-    md = requests.get(raw_url).text
-
-    # Extract Q&A
-    qa = extract_ques_ans(md)
-
-    # Fix images & SVGs
-    question = fix_image_paths(qa["question"], subject)
-    question = handle_svg_images(question)
-
-    answer = fix_image_paths(qa["answer"], subject)
-    answer = handle_svg_images(answer)
-
-    return jsonify({
-        "question": question,
-        "answer": answer
-    })
 
 
 
@@ -214,7 +240,8 @@ def export():
             md_path,
             "-o",
             pdf_path,
-            "--pdf-engine=xelatex"
+            "--pdf-engine=xelatex",
+            "--include-in-header=header.tex"
         ]
 
         result = subprocess.run(
@@ -296,18 +323,37 @@ def upload_csv():
                     continue
 
                 qa = extract_ques_ans(r.text)
+                is_nat = is_nat_question(qa["question"])
 
-                question = handle_svg_images(
-                    fix_image_paths(qa["question"], subject)
+                question = convert_options_to_enumerate(
+                    handle_svg_images(
+                        fix_image_paths(qa["question"], subject)
+                    )
                 )
+
                 answer = handle_svg_images(
-                    fix_image_paths(qa["answer"], subject)
-                )
+                        fix_image_paths(qa["answer"], subject)
+                    )
 
                 buffer += f"### Question {q_counter}\n\n{question}\n\n"
 
                 if answer.strip():
-                    buffer += f"#### Answer\n\n{answer}\n\n"
+
+                    # Check if NAT Question
+                    if is_nat: 
+                        buffer += (
+                            "\\par\\textbf{Answer: }"
+                            f"{answer.strip()}\n\n"
+                        )
+
+                    else: 
+                        answer = format_answer_block(answer)
+                        buffer += (
+                            "\\par\\textbf{Answer}\\vspace{0.3em}\n\n"
+                            "\\begin{itemize}[leftmargin=1.5em]\n"
+                            f"\\item[] {answer}\n"
+                            "\\end{itemize}\n\n"
+                        )
 
                 q_counter += 1
                 questions_added += 1
@@ -334,4 +380,3 @@ if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-

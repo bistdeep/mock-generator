@@ -2,43 +2,6 @@ let buffer = "";
 let qCounter = 1;
 let currentSubject = null;
 
-const allowedSubjects = [
-  "ai",
-  "calculus",
-  "dbms",
-  "linear_algebra",
-  "machine_learning",
-  "pdsa",
-  "prob_stats",
-  "aptitude",
-];
-
-const SUBJECT_LABELS = {
-  ai: "Artificial Intelligence",
-  calculus: "Calculus",
-  dbms: "Database Management Systems",
-  linear_algebra: "Linear Algebra",
-  machine_learning: "Machine Learning",
-  pdsa: "Programming, Data Structures & Algorithms",
-  prob_stats: "Probability & Statistics",
-  aptitude: "Aptitude",
-};
-
-fetch("/subjects")
-  .then((r) => r.json())
-  .then((data) => {
-    let s = document.getElementById("subject");
-
-    data
-      .filter((sub) => allowedSubjects.includes(sub))
-      .forEach((sub) => {
-        let o = document.createElement("option");
-        o.value = sub;
-        o.text = SUBJECT_LABELS[sub] || sub.replace(/_/g, " ");
-        s.add(o);
-      });
-  });
-
 /*
   Functions 
 */
@@ -62,61 +25,6 @@ function initBuffer() {
 
 function getSubjectLabel(code) {
   return SUBJECT_LABELS[code] || code.replace(/_/g, " ");
-}
-
-function loadQuestions() {
-  let sub = subject.value;
-  fetch(`/questions/${sub}`)
-    .then((r) => r.json())
-    .then((data) => {
-      questions.innerHTML = "";
-      data.forEach((q) => {
-        let o = document.createElement("option");
-        o.value = q;
-        o.text = q;
-        questions.add(o);
-      });
-    });
-}
-
-// Add question and answer to buffer
-function addQuestion() {
-  const subjectCode = subject.value;
-  const subjectLabel = getSubjectLabel(subjectCode);
-
-  fetch("/extract", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      subject: subjectCode,
-      question: questions.value,
-    }),
-  })
-    .then((r) => r.json())
-    .then((data) => {
-      // Initialize buffer with title if empty
-      if (!buffer) {
-        initBuffer();
-      }
-
-      // If subject changed, insert new subject section
-      if (currentSubject !== subjectCode) {
-        buffer += `\n## Subject: ${subjectLabel}\n\n`;
-        currentSubject = subjectCode;
-        qCounter = 1; // reset question numbering
-      }
-
-      // Add question
-      buffer += `### Question ${qCounter}\n\n${data.question}\n\n`;
-
-      // Add answer if present
-      if (data.answer && data.answer.trim() !== "") {
-        buffer += `#### Answer\n\n${data.answer}\n\n`;
-      }
-
-      qCounter++;
-      preview.value = buffer;
-    });
 }
 
 function exportPDF() {
@@ -224,6 +132,15 @@ function uploadCSV() {
       hideLoader();
       alert("Failed to generate mock from CSV");
     });
+}
+
+// Save changes made in the preview textarea to the buffer
+function saveChanges() {
+  const preview = document.getElementById("preview");
+
+  buffer = preview.value;
+
+  alert("Changes saved successfully!");
 }
 
 // Update file name display when file is selected

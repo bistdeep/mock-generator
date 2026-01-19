@@ -11,7 +11,7 @@
     <div class="loader"></div>
     <p>Generating mock from CSV...</p>
   </div>
-  
+
   <body>
     <div class="container">
       <h1>🎓 GATE Mock Test Generator</h1>
@@ -24,26 +24,6 @@
             id="mockTitle"
             placeholder="Enter Mock Test Title"
           />
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">Select Subject</div>
-        <div class="control-group">
-          <select id="subject">
-            <option value="" disabled selected>Select a subject</option>
-          </select>
-          <button onclick="loadQuestions()">Load Questions</button>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">Choose Question</div>
-        <div class="control-group">
-          <select id="questions">
-            <option value="" disabled selected>Select a question</option>
-          </select>
-          <button onclick="addQuestion()">Add to Mock</button>
         </div>
       </div>
 
@@ -77,6 +57,7 @@
       </div>
 
       <div class="export-section">
+        <button onclick="saveChanges()">💾 Save Changes</button>
         <button onclick="exportPDF()">📄 Export as PDF</button>
         <button onclick="downloadMarkdown()">⬇️ Download Markdown</button>
       </div>
